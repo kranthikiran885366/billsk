@@ -15,7 +15,6 @@ export async function POST(request: NextRequest) {
     // Enhanced security tracking
     const ip = request.headers.get("x-forwarded-for")?.split(",")[0] || "unknown"
     const userAgent = request.headers.get("user-agent") || "unknown"
-    const deviceFingerprint = generateAdvancedFingerprint(request)
     const identifier = `login:${ip}`
 
     // Enhanced account lockout check
@@ -92,7 +91,7 @@ export async function POST(request: NextRequest) {
       await logSecurityEvent("LOGIN_FAILED", "unknown", "Unknown", {
         email,
         reason: "user_not_found",
-        deviceFingerprint,
+        deviceFingerprint: clientFingerprint || 'unknown',
         authMethod: authMethod || 'password'
       }, request)
 
@@ -166,7 +165,7 @@ export async function POST(request: NextRequest) {
         email,
         reason: "invalid_password",
         failedAttempts: newFailedAttempts,
-        deviceFingerprint,
+        deviceFingerprint: clientFingerprint || 'unknown',
         authMethod: authMethod || 'password'
       }, request)
 
@@ -208,7 +207,7 @@ export async function POST(request: NextRequest) {
     // Enhanced security logging for successful login
     await logSecurityEvent("LOGIN_SUCCESS", user._id, user.name, {
       email,
-      deviceFingerprint,
+      deviceFingerprint: clientFingerprint || 'unknown',
       authMethod: authMethod || 'password',
       userAgent,
       loginTime: new Date().toISOString()
@@ -243,7 +242,7 @@ export async function POST(request: NextRequest) {
           role: user.role,
         },
         security: {
-          deviceFingerprint,
+          deviceFingerprint: clientFingerprint || 'unknown',
           authMethod: authMethod || 'password',
           loginTime: new Date().toISOString()
         }

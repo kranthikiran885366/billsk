@@ -19,6 +19,14 @@ export interface AdvancedFingerprint {
   connection: { effectiveType?: string; downlink?: number }
   battery: { charging?: boolean; level?: number }
   permissions: Record<string, string>
+  media: { hasCamera?: boolean; hasMicrophone?: boolean }
+  storage: { localStorage?: boolean; sessionStorage?: boolean; indexedDB?: boolean; webSQL?: boolean }
+  cpu: { benchmarkTime?: number; cores?: number }
+  memory: { jsHeapSizeLimit?: number; totalJSHeapSize?: number; usedJSHeapSize?: number }
+  webrtc: { sdp?: string }
+  speech: { voices?: number }
+  gamepad: { supported?: boolean; count?: number }
+  sensors: Record<string, boolean>
   hash: string
 }
 
@@ -42,7 +50,15 @@ export function generateAdvancedFingerprint(data: Partial<AdvancedFingerprint>):
     JSON.stringify(data.plugins || []),
     JSON.stringify(data.connection || {}),
     JSON.stringify(data.battery || {}),
-    JSON.stringify(data.permissions || {})
+    JSON.stringify(data.permissions || {}),
+    JSON.stringify(data.media || {}),
+    JSON.stringify(data.storage || {}),
+    JSON.stringify(data.cpu || {}),
+    JSON.stringify(data.memory || {}),
+    JSON.stringify(data.webrtc || {}),
+    JSON.stringify(data.speech || {}),
+    JSON.stringify(data.gamepad || {}),
+    JSON.stringify(data.sensors || {})
   ].join("|")
   
   return crypto.createHash("sha256").update(components).digest("hex")
@@ -74,7 +90,15 @@ async function collectAdvancedFingerprint() {
     plugins: getPluginFingerprint(),
     connection: getConnectionInfo(),
     battery: await getBatteryInfo(),
-    permissions: await getPermissions()
+    permissions: await getPermissions(),
+    media: getMediaDevices(),
+    storage: getStorageInfo(),
+    cpu: getCPUInfo(),
+    memory: getMemoryInfo(),
+    webrtc: await getWebRTCFingerprint(),
+    speech: getSpeechSynthesis(),
+    gamepad: getGamepadInfo(),
+    sensors: await getSensorInfo()
   }
   return fp
 }
@@ -177,6 +201,88 @@ async function getPermissions() {
     } catch {}
   }
   return permissions
+}
+
+function getMediaDevices() {
+  try {
+    return navigator.mediaDevices ? {
+      hasCamera: navigator.mediaDevices.getSupportedConstraints().video || false,
+      hasMicrophone: navigator.mediaDevices.getSupportedConstraints().audio || false
+    } : {}
+  } catch { return {} }
+}
+
+function getStorageInfo() {
+  try {
+    return {
+      localStorage: !!window.localStorage,
+      sessionStorage: !!window.sessionStorage,
+      indexedDB: !!window.indexedDB,
+      webSQL: !!window.openDatabase
+    }
+  } catch { return {} }
+}
+
+function getCPUInfo() {
+  try {
+    const start = performance.now()
+    for (let i = 0; i < 100000; i++) Math.random()
+    const end = performance.now()
+    return {
+      benchmarkTime: Math.round(end - start),
+      cores: navigator.hardwareConcurrency || 0
+    }
+  } catch { return {} }
+}
+
+function getMemoryInfo() {
+  try {
+    const memory = navigator.memory || performance.memory
+    return memory ? {
+      jsHeapSizeLimit: memory.jsHeapSizeLimit,
+      totalJSHeapSize: memory.totalJSHeapSize,
+      usedJSHeapSize: memory.usedJSHeapSize
+    } : {}
+  } catch { return {} }
+}
+
+async function getWebRTCFingerprint() {
+  try {
+    const pc = new RTCPeerConnection({ iceServers: [] })
+    const offer = await pc.createOffer()
+    pc.close()
+    return {
+      sdp: offer.sdp ? offer.sdp.slice(0, 100) : ''
+    }
+  } catch { return {} }
+}
+
+function getSpeechSynthesis() {
+  try {
+    return window.speechSynthesis ? {
+      voices: speechSynthesis.getVoices().length
+    } : {}
+  } catch { return {} }
+}
+
+function getGamepadInfo() {
+  try {
+    return {
+      supported: !!navigator.getGamepads,
+      count: navigator.getGamepads ? navigator.getGamepads().length : 0
+    }
+  } catch { return {} }
+}
+
+async function getSensorInfo() {
+  const sensors = {}
+  try {
+    if ('Accelerometer' in window) sensors.accelerometer = true
+    if ('Gyroscope' in window) sensors.gyroscope = true
+    if ('Magnetometer' in window) sensors.magnetometer = true
+    if ('AmbientLightSensor' in window) sensors.ambientLight = true
+  } catch {}
+  return sensors
 }
 `
 
