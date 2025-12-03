@@ -78,57 +78,61 @@ export function AdminDashboard() {
 
       {/* Stats cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Bills</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats?.totalBills || 0}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              <Link href="/admin/bills" className="hover:underline">
+        <Link href="/admin/bills">
+          <Card className="hover:bg-muted/50 transition-colors cursor-pointer">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Total Bills</CardTitle>
+              <FileText className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats?.totalBills || 0}</div>
+              <p className="text-xs text-muted-foreground mt-1">
                 View all bills
-              </Link>
-            </p>
-          </CardContent>
-        </Card>
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Revenue</CardTitle>
-            <TrendingUp className="h-4 w-4 text-success" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-success">{formatCurrency(stats?.totalRevenue || 0)}</div>
-            <p className="text-xs text-muted-foreground mt-1">From paid invoices</p>
-          </CardContent>
-        </Card>
+        <Link href="/admin/bills?status=paid">
+          <Card className="hover:bg-muted/50 transition-colors cursor-pointer">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Total Revenue</CardTitle>
+              <TrendingUp className="h-4 w-4 text-success" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-success">{formatCurrency(stats?.totalRevenue || 0)}</div>
+              <p className="text-xs text-muted-foreground mt-1">From paid invoices</p>
+            </CardContent>
+          </Card>
+        </Link>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Pending Amount</CardTitle>
-            <Clock className="h-4 w-4 text-warning" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-warning">{formatCurrency(stats?.pendingAmount || 0)}</div>
-            <p className="text-xs text-muted-foreground mt-1">Awaiting payment</p>
-          </CardContent>
-        </Card>
+        <Link href="/admin/bills?status=finalized">
+          <Card className="hover:bg-muted/50 transition-colors cursor-pointer">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Pending Amount</CardTitle>
+              <Clock className="h-4 w-4 text-warning" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-warning">{formatCurrency(stats?.pendingAmount || 0)}</div>
+              <p className="text-xs text-muted-foreground mt-1">Awaiting payment</p>
+            </CardContent>
+          </Card>
+        </Link>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Commodities</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats?.totalCommodities || 0}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              <Link href="/admin/commodities" className="hover:underline">
+        <Link href="/admin/commodities">
+          <Card className="hover:bg-muted/50 transition-colors cursor-pointer">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Commodities</CardTitle>
+              <Package className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats?.totalCommodities || 0}</div>
+              <p className="text-xs text-muted-foreground mt-1">
                 Manage commodities
-              </Link>
-            </p>
-          </CardContent>
-        </Card>
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
 
       {/* Quick actions and recent bills */}
@@ -227,26 +231,28 @@ export function AdminDashboard() {
       <Card>
         <CardHeader>
           <CardTitle>Bills by Status</CardTitle>
-          <CardDescription>Distribution of bill statuses</CardDescription>
+          <CardDescription>Click on any status to view filtered bills</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-3">
             {stats?.billsByStatus.map((item) => (
-              <div key={item.status} className="flex items-center justify-between p-4 rounded-lg bg-muted/50">
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`w-3 h-3 rounded-full ${
-                      item.status === "paid"
-                        ? "bg-success"
-                        : item.status === "finalized"
-                          ? "bg-primary"
-                          : "bg-muted-foreground"
-                    }`}
-                  />
-                  <span className="capitalize font-medium">{item.status}</span>
+              <Link key={item.status} href={`/admin/bills?status=${item.status}`}>
+                <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors cursor-pointer">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`w-3 h-3 rounded-full ${
+                        item.status === "paid"
+                          ? "bg-success"
+                          : item.status === "finalized"
+                            ? "bg-primary"
+                            : "bg-muted-foreground"
+                      }`}
+                    />
+                    <span className="capitalize font-medium">{item.status}</span>
+                  </div>
+                  <span className="text-2xl font-bold">{item.count}</span>
                 </div>
-                <span className="text-2xl font-bold">{item.count}</span>
-              </div>
+              </Link>
             ))}
           </div>
         </CardContent>

@@ -87,11 +87,27 @@ export function AdminCommoditiesList() {
     setIsSaving(true)
 
     try {
-      const payload = {
-        name: formData.name,
-        defaultRatePer100Kg: Number.parseFloat(formData.defaultRatePer100Kg),
-        defaultDeductionPerBag: Number.parseInt(formData.defaultDeductionPerBag),
+      const rate = Number.parseFloat(formData.defaultRatePer100Kg)
+      
+      if (!formData.name.trim()) {
+        toast.error("Commodity name is required")
+        setIsSaving(false)
+        return
       }
+      
+      if (isNaN(rate) || rate <= 0) {
+        toast.error("Rate must be a positive number")
+        setIsSaving(false)
+        return
+      }
+
+      const payload = {
+        name: formData.name.trim(),
+        defaultRatePer100Kg: rate,
+        defaultDeductionPerBag: Number.parseInt(formData.defaultDeductionPerBag, 10) as 0 | 1 | 2,
+      }
+
+      console.log('Creating commodity with payload:', payload)
 
       const url = editingCommodity ? `/api/commodities/${editingCommodity._id}` : "/api/commodities"
       const method = editingCommodity ? "PUT" : "POST"
@@ -103,15 +119,24 @@ export function AdminCommoditiesList() {
       })
 
       const data = await res.json()
+      console.log('API response:', data)
 
       if (data.success) {
         toast.success(editingCommodity ? "Commodity updated successfully" : "Commodity created successfully")
         setIsDialogOpen(false)
         fetchCommodities()
       } else {
-        toast.error(data.error?.message || "Failed to save commodity")
+        console.error('Validation error:', data.error)
+        if (data.error?.details) {
+          console.error('Validation details:', JSON.stringify(data.error.details, null, 2))
+        }
+        const errorMsg = data.error?.details 
+          ? `${data.error.message}: ${JSON.stringify(data.error.details)}`
+          : data.error?.message || "Failed to save commodity"
+        toast.error(errorMsg)
       }
-    } catch {
+    } catch (error) {
+      console.error('Submit error:', error)
       toast.error("An error occurred while saving")
     } finally {
       setIsSaving(false)

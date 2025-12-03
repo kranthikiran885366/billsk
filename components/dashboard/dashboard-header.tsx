@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Bell, LogOut, User, Menu } from "lucide-react"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet"
 import { DashboardSidebar } from "./dashboard-sidebar"
 
 export function DashboardHeader() {
@@ -38,6 +38,7 @@ export function DashboardHeader() {
             </Button>
           </SheetTrigger>
           <SheetContent side="left" className="p-0 w-64">
+            <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
             <DashboardSidebar userRole={user?.role || "viewer"} isMobile />
           </SheetContent>
         </Sheet>

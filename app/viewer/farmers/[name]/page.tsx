@@ -1,5 +1,10 @@
 import { ViewerFarmerDetail } from "@/components/viewer/viewer-farmer-detail"
 
-export default function ViewerFarmerDetailPage({ params }: { params: { name: string } }) {
-  return <ViewerFarmerDetail farmerName={decodeURIComponent(params.name)} />
+interface PageProps {
+  params: Promise<{ name: string }>
+}
+
+export default async function ViewerFarmerDetailPage({ params }: PageProps) {
+  const { name } = await params
+  return <ViewerFarmerDetail farmerName={decodeURIComponent(name)} />
 }

@@ -14,20 +14,20 @@ import type { Commodity, CreateBillInput } from "@/lib/types"
 
 interface FarmerData {
   name: string
+  ratePer100Kg: number
   bags: { originalWeight: number; deductionKg: 0 | 1 | 2; notes: string }[]
 }
 
 export function MultiFarmerBillForm() {
   const [commodities, setCommodities] = useState<Commodity[]>([])
-  const [formData, setFormData] = useState<CreateBillInput>({
-    buyerName: "",
-    farmers: [],
+  const [formData, setFormData] = useState({
+    farmers: [] as FarmerData[],
     commodityId: "",
-    ratePer100Kg: 0,
-    defaultDeductionPerBag: 1,
+    defaultRatePer100Kg: 0,
+    defaultDeductionPerBag: 1 as 0 | 1 | 2,
     deductions: {
       commission: 0,
-      commissionType: "flat",
+      commissionType: "flat" as "flat" | "percentage",
       transport: 0,
       labour: 0,
       loading: 0,
@@ -56,7 +56,7 @@ export function MultiFarmerBillForm() {
   const addFarmer = () => {
     setFormData(prev => ({
       ...prev,
-      farmers: [...prev.farmers, { name: "", bags: [] }]
+      farmers: [...prev.farmers, { name: "", ratePer100Kg: prev.defaultRatePer100Kg, bags: [] }]
     }))
   }
 
@@ -67,7 +67,7 @@ export function MultiFarmerBillForm() {
     }))
   }
 
-  const updateFarmer = (farmerIndex: number, field: string, value: string) => {
+  const updateFarmer = (farmerIndex: number, field: string, value: string | number) => {
     setFormData(prev => ({
       ...prev,
       farmers: prev.farmers.map((farmer, index) => 
@@ -114,20 +114,35 @@ export function MultiFarmerBillForm() {
     }))
   }
 
-  const calculateTotals = () => {
+  const calculateFarmerTotals = (farmer: FarmerData) => {
     let totalBags = 0
     let totalOriginalWeight = 0
     let totalAdjustedWeight = 0
 
-    formData.farmers.forEach(farmer => {
-      farmer.bags.forEach(bag => {
-        totalBags++
-        totalOriginalWeight += bag.originalWeight
-        totalAdjustedWeight += (bag.originalWeight - bag.deductionKg)
-      })
+    farmer.bags.forEach(bag => {
+      totalBags++
+      totalOriginalWeight += bag.originalWeight
+      totalAdjustedWeight += (bag.originalWeight - bag.deductionKg)
     })
 
-    const totalAmount = (totalAdjustedWeight / 100) * formData.ratePer100Kg
+    const totalAmount = (totalAdjustedWeight / 100) * farmer.ratePer100Kg
+    return { totalBags, totalOriginalWeight, totalAdjustedWeight, totalAmount }
+  }
+
+  const calculateOverallTotals = () => {
+    let totalBags = 0
+    let totalOriginalWeight = 0
+    let totalAdjustedWeight = 0
+    let totalAmount = 0
+
+    formData.farmers.forEach(farmer => {
+      const farmerTotals = calculateFarmerTotals(farmer)
+      totalBags += farmerTotals.totalBags
+      totalOriginalWeight += farmerTotals.totalOriginalWeight
+      totalAdjustedWeight += farmerTotals.totalAdjustedWeight
+      totalAmount += farmerTotals.totalAmount
+    })
+
     const totalDeductions = Object.values(formData.deductions).reduce((sum, val) => 
       typeof val === 'number' ? sum + val : sum, 0
     )
@@ -136,10 +151,62 @@ export function MultiFarmerBillForm() {
     return { totalBags, totalOriginalWeight, totalAdjustedWeight, totalAmount, finalPayable }
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const createIndividualBill = async (farmerIndex: number) => {
+    const farmer = formData.farmers[farmerIndex]
     
-    if (!formData.buyerName || !formData.commodityId || formData.farmers.length === 0) {
+    if (!formData.commodityId || !farmer.name || farmer.bags.length === 0) {
+      toast.error("Please fill all required fields for this farmer")
+      return
+    }
+
+    // Validate bag weights
+    const invalidBags = farmer.bags.filter(bag => !bag.originalWeight || bag.originalWeight <= 0)
+    if (invalidBags.length > 0) {
+      toast.error("All bags must have valid weights greater than 0")
+      return
+    }
+
+    if (!farmer.ratePer100Kg || farmer.ratePer100Kg <= 0) {
+      toast.error("Please set a valid rate for this farmer")
+      return
+    }
+
+    setIsLoading(true)
+    try {
+      const payload = {
+        sellerName: farmer.name,
+        buyerName: "Buyer", // Default buyer name
+        commodityId: formData.commodityId,
+        ratePer100Kg: farmer.ratePer100Kg,
+        deductionPerBag: formData.defaultDeductionPerBag,
+        bags: farmer.bags.map(bag => ({
+          originalWeight: bag.originalWeight,
+          notes: bag.notes || undefined
+        })),
+        deductions: formData.deductions
+      }
+
+      const response = await fetch("/api/bills", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      })
+
+      const data = await response.json()
+      if (data.success) {
+        toast.success(`Bill created successfully for ${farmer.name}`)
+      } else {
+        toast.error(data.error?.message || `Failed to create bill for ${farmer.name}`)
+      }
+    } catch (error) {
+      toast.error(`Network error occurred for ${farmer.name}`)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const createAllBills = async () => {
+    if (!formData.commodityId || formData.farmers.length === 0) {
       toast.error("Please fill all required fields")
       return
     }
@@ -150,44 +217,65 @@ export function MultiFarmerBillForm() {
     }
 
     setIsLoading(true)
-    try {
-      const response = await fetch("/api/bills/multi-farmer", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData)
-      })
+    let successCount = 0
+    
+    for (let i = 0; i < formData.farmers.length; i++) {
+      try {
+        const farmer = formData.farmers[i]
+        const payload = {
+          sellerName: farmer.name,
+          buyerName: "Buyer", // Default buyer name
+          commodityId: formData.commodityId,
+          ratePer100Kg: farmer.ratePer100Kg,
+          deductionPerBag: formData.defaultDeductionPerBag,
+          bags: farmer.bags.map(bag => ({
+            originalWeight: bag.originalWeight,
+            notes: bag.notes || undefined
+          })),
+          deductions: formData.deductions
+        }
 
-      const data = await response.json()
-      if (data.success) {
-        toast.success("Multi-farmer bill created successfully")
-        // Reset form
-        setFormData({
-          buyerName: "",
-          farmers: [],
-          commodityId: "",
-          ratePer100Kg: 0,
-          defaultDeductionPerBag: 1,
-          deductions: {
-            commission: 0,
-            commissionType: "flat",
-            transport: 0,
-            labour: 0,
-            loading: 0,
-            weighing: 0,
-            misc: 0
-          }
+        const response = await fetch("/api/bills", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
         })
-      } else {
-        toast.error(data.error?.message || "Failed to create bill")
+
+        const data = await response.json()
+        if (data.success) {
+          successCount++
+        }
+      } catch (error) {
+        console.error(`Error creating bill for farmer ${i}:`, error)
       }
-    } catch (error) {
-      toast.error("Network error occurred")
-    } finally {
-      setIsLoading(false)
+    }
+    
+    setIsLoading(false)
+    
+    if (successCount === formData.farmers.length) {
+      toast.success(`All ${successCount} bills created successfully!`)
+      // Reset form
+      setFormData({
+        farmers: [],
+        commodityId: "",
+        defaultRatePer100Kg: 0,
+        defaultDeductionPerBag: 1,
+        deductions: {
+          commission: 0,
+          commissionType: "flat",
+          transport: 0,
+          labour: 0,
+          loading: 0,
+          weighing: 0,
+          misc: 0
+        }
+      })
+    } else {
+      toast.error(`Only ${successCount} out of ${formData.farmers.length} bills created successfully`)
     }
   }
 
-  const totals = calculateTotals()
+  const totals = calculateOverallTotals()
 
   return (
     <div className="space-y-6">
@@ -197,22 +285,12 @@ export function MultiFarmerBillForm() {
             <Users className="h-5 w-5" />
             Multi-Farmer Bill
           </CardTitle>
-          <CardDescription>Create a bill with multiple farmers for one buyer</CardDescription>
+          <CardDescription>Create bills for multiple farmers</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Buyer & Commodity */}
+          <div className="space-y-6">
+            {/* Commodity Selection */}
             <div className="grid md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="buyerName">Buyer Name *</Label>
-                <Input
-                  id="buyerName"
-                  value={formData.buyerName}
-                  onChange={(e) => setFormData(prev => ({ ...prev, buyerName: e.target.value }))}
-                  required
-                />
-              </div>
-              
               <div>
                 <Label htmlFor="commodity">Commodity *</Label>
                 <Select
@@ -222,33 +300,63 @@ export function MultiFarmerBillForm() {
                     setFormData(prev => ({
                       ...prev,
                       commodityId: value,
-                      ratePer100Kg: commodity?.defaultRatePer100Kg || 0,
-                      defaultDeductionPerBag: commodity?.defaultDeductionPerBag || 1
+                      defaultRatePer100Kg: commodity?.defaultRatePer100Kg || 0,
+                      defaultDeductionPerBag: commodity?.defaultDeductionPerBag || 1,
+                      farmers: prev.farmers.map(farmer => ({
+                        ...farmer,
+                        ratePer100Kg: commodity?.defaultRatePer100Kg || farmer.ratePer100Kg
+                      }))
                     }))
                   }}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="h-11">
                     <SelectValue placeholder="Select commodity" />
                   </SelectTrigger>
-                  <SelectContent>
-                    {commodities.map((commodity) => (
-                      <SelectItem key={commodity._id} value={commodity._id}>
-                        {commodity.name} - ₹{commodity.defaultRatePer100Kg}/100kg
+                  <SelectContent className="max-h-60">
+                    {commodities.length === 0 ? (
+                      <SelectItem value="loading" disabled>
+                        Loading commodities...
                       </SelectItem>
-                    ))}
+                    ) : (
+                      commodities.map((commodity) => (
+                        <SelectItem key={commodity._id} value={commodity._id} className="py-3">
+                          <div className="flex flex-col">
+                            <span className="font-medium">{commodity.name}</span>
+                            <span className="text-sm text-muted-foreground">
+                              ₹{commodity.defaultRatePer100Kg}/100kg • {commodity.defaultDeductionPerBag}kg deduction
+                            </span>
+                          </div>
+                        </SelectItem>
+                      ))
+                    )}
                   </SelectContent>
                 </Select>
+                {formData.commodityId && (
+                  <p className="text-xs text-muted-foreground">
+                    Selected: {commodities.find(c => c._id === formData.commodityId)?.name}
+                  </p>
+                )}
               </div>
             </div>
 
             <div className="grid md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="rate">Rate per 100kg (₹)</Label>
+                <Label htmlFor="rate">Default Rate per 100kg (₹)</Label>
                 <Input
                   id="rate"
                   type="number"
-                  value={formData.ratePer100Kg}
-                  onChange={(e) => setFormData(prev => ({ ...prev, ratePer100Kg: Number(e.target.value) }))}
+                  value={formData.defaultRatePer100Kg}
+                  onChange={(e) => {
+                    const newRate = Number(e.target.value)
+                    setFormData(prev => ({
+                      ...prev,
+                      defaultRatePer100Kg: newRate,
+                      farmers: prev.farmers.map(farmer => ({
+                        ...farmer,
+                        ratePer100Kg: newRate
+                      }))
+                    }))
+                  }}
                 />
               </div>
               
@@ -296,14 +404,26 @@ export function MultiFarmerBillForm() {
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div>
-                      <Label>Farmer Name *</Label>
-                      <Input
-                        value={farmer.name}
-                        onChange={(e) => updateFarmer(farmerIndex, "name", e.target.value)}
-                        placeholder="Enter farmer name"
-                        required
-                      />
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div>
+                        <Label>Farmer Name *</Label>
+                        <Input
+                          value={farmer.name}
+                          onChange={(e) => updateFarmer(farmerIndex, "name", e.target.value)}
+                          placeholder="Enter farmer name"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label>Rate per 100kg (₹) *</Label>
+                        <Input
+                          type="number"
+                          value={farmer.ratePer100Kg}
+                          onChange={(e) => updateFarmer(farmerIndex, "ratePer100Kg", Number(e.target.value))}
+                          placeholder="Rate per 100kg"
+                          required
+                        />
+                      </div>
                     </div>
 
                     <div className="space-y-3">
@@ -378,6 +498,43 @@ export function MultiFarmerBillForm() {
                         </div>
                       ))}
                     </div>
+                    
+                    {/* Farmer Summary and Individual Bill Button */}
+                    <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <div className="grid grid-cols-5 gap-3 text-sm flex-1">
+                          <div>
+                            <p className="text-gray-600">Bags</p>
+                            <p className="font-semibold">{farmer.bags.length}</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-600">Actual Weight</p>
+                            <p className="font-semibold">{calculateFarmerTotals(farmer).totalOriginalWeight} kg</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-600">Deduction</p>
+                            <p className="font-semibold text-red-600">-{(calculateFarmerTotals(farmer).totalOriginalWeight - calculateFarmerTotals(farmer).totalAdjustedWeight)} kg</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-600">Final Weight</p>
+                            <p className="font-semibold">{calculateFarmerTotals(farmer).totalAdjustedWeight} kg</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-600">Amount</p>
+                            <p className="font-semibold text-green-600">₹{calculateFarmerTotals(farmer).totalAmount.toLocaleString()}</p>
+                          </div>
+                        </div>
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={() => createIndividualBill(farmerIndex)}
+                          disabled={isLoading || !farmer.name || farmer.bags.length === 0 || !formData.commodityId || farmer.bags.some(bag => !bag.originalWeight || bag.originalWeight <= 0) || !farmer.ratePer100Kg || farmer.ratePer100Kg <= 0}
+                          className="ml-4"
+                        >
+                          Create Bill
+                        </Button>
+                      </div>
+                    </div>
                   </CardContent>
                 </Card>
               ))}
@@ -432,34 +589,48 @@ export function MultiFarmerBillForm() {
             {/* Summary */}
             <Card className="bg-blue-50">
               <CardHeader>
-                <CardTitle className="text-base">Bill Summary</CardTitle>
+                <CardTitle className="text-base">Overall Bill Summary</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid md:grid-cols-4 gap-4 text-sm">
+                <div className="grid md:grid-cols-5 gap-4 text-sm">
                   <div>
                     <p className="text-gray-600">Total Bags</p>
                     <p className="font-semibold">{totals.totalBags}</p>
                   </div>
                   <div>
-                    <p className="text-gray-600">Total Weight</p>
+                    <p className="text-gray-600">Actual Weight</p>
+                    <p className="font-semibold">{totals.totalOriginalWeight} kg</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">Total Deduction</p>
+                    <p className="font-semibold text-red-600">-{(totals.totalOriginalWeight - totals.totalAdjustedWeight)} kg</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">Final Weight</p>
                     <p className="font-semibold">{totals.totalAdjustedWeight} kg</p>
                   </div>
                   <div>
                     <p className="text-gray-600">Total Amount</p>
-                    <p className="font-semibold">₹{totals.totalAmount.toLocaleString()}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-600">Final Payable</p>
-                    <p className="font-semibold text-green-600">₹{totals.finalPayable.toLocaleString()}</p>
+                    <p className="font-semibold text-green-600">₹{totals.totalAmount.toLocaleString()}</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Button type="submit" disabled={isLoading} className="w-full">
-              {isLoading ? "Creating Bill..." : "Create Multi-Farmer Bill"}
-            </Button>
-          </form>
+            <div className="space-y-2">
+              <Button 
+                type="button" 
+                onClick={createAllBills}
+                disabled={isLoading || formData.farmers.length === 0} 
+                className="w-full"
+              >
+                {isLoading ? "Creating Bills..." : "Create All Bills"}
+              </Button>
+              <p className="text-xs text-center text-muted-foreground">
+                This will create {formData.farmers.length} separate bills
+              </p>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>

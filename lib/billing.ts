@@ -114,13 +114,19 @@ export function calculateBilling(
 }
 
 /**
- * Generate next invoice ID
+ * Generate next invoice ID with farmer name
  */
-export function generateInvoiceId(prefix = "INV"): string {
+export function generateInvoiceId(farmerName?: string, prefix = "INV"): string {
   const year = new Date().getFullYear()
   const random = Math.floor(Math.random() * 10000)
     .toString()
     .padStart(4, "0")
+  
+  if (farmerName) {
+    const farmerCode = farmerName.split(' ')[0].toUpperCase().slice(0, 3)
+    return `${prefix}-${year}-${random}-${farmerCode}`
+  }
+  
   return `${prefix}-${year}-${random}`
 }
 

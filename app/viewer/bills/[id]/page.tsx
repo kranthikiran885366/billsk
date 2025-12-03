@@ -1,5 +1,10 @@
 import { ViewerBillDetail } from "@/components/viewer/viewer-bill-detail"
 
-export default function ViewerBillDetailPage({ params }: { params: { id: string } }) {
-  return <ViewerBillDetail billId={params.id} />
+interface PageProps {
+  params: Promise<{ id: string }>
+}
+
+export default async function ViewerBillDetailPage({ params }: PageProps) {
+  const { id } = await params
+  return <ViewerBillDetail billId={id} />
 }

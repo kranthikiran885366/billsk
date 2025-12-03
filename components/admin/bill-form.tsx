@@ -30,8 +30,7 @@ export function BillForm({ bill, bags }: BillFormProps) {
   const [commodities, setCommodities] = useState<Commodity[]>([])
 
   const [formData, setFormData] = useState({
-    sellerName: bill?.sellerName || "",
-    buyerName: bill?.buyerName || "",
+    farmerName: bill?.sellerName || "",
     commodityId: bill?.commodityId || "",
     ratePer100Kg: bill?.ratePer100Kg?.toString() || "",
     deductionPerBag: bill?.deductionPerBag?.toString() || "1",
@@ -156,8 +155,8 @@ export function BillForm({ bill, bags }: BillFormProps) {
 
     try {
       const payload = {
-        sellerName: formData.sellerName,
-        buyerName: formData.buyerName,
+        sellerName: formData.farmerName,
+        buyerName: "Buyer", // Default buyer name
         commodityId: formData.commodityId,
         ratePer100Kg: Number.parseFloat(formData.ratePer100Kg),
         deductionPerBag: Number.parseInt(formData.deductionPerBag) as 0 | 1 | 2,
@@ -201,46 +200,50 @@ export function BillForm({ bill, bags }: BillFormProps) {
           <Card>
             <CardHeader>
               <CardTitle>Basic Information</CardTitle>
-              <CardDescription>Seller, buyer, and commodity details</CardDescription>
+              <CardDescription>Farmer and commodity details</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="sellerName">Seller Name *</Label>
-                  <Input
-                    id="sellerName"
-                    value={formData.sellerName}
-                    onChange={(e) => setFormData({ ...formData, sellerName: e.target.value })}
-                    placeholder="Enter seller name"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="buyerName">Buyer Name *</Label>
-                  <Input
-                    id="buyerName"
-                    value={formData.buyerName}
-                    onChange={(e) => setFormData({ ...formData, buyerName: e.target.value })}
-                    placeholder="Enter buyer name"
-                    required
-                  />
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="farmerName">Farmer Name *</Label>
+                <Input
+                  id="farmerName"
+                  value={formData.farmerName}
+                  onChange={(e) => setFormData({ ...formData, farmerName: e.target.value })}
+                  placeholder="Enter farmer name"
+                  required
+                />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="commodityId">Commodity *</Label>
                 <Select value={formData.commodityId} onValueChange={handleCommodityChange} required>
-                  <SelectTrigger>
+                  <SelectTrigger className="h-11">
                     <SelectValue placeholder="Select commodity" />
                   </SelectTrigger>
-                  <SelectContent>
-                    {commodities.map((c) => (
-                      <SelectItem key={c._id} value={c._id}>
-                        {c.name} - {formatCurrency(c.defaultRatePer100Kg)}/100kg
+                  <SelectContent className="max-h-60">
+                    {commodities.length === 0 ? (
+                      <SelectItem value="loading" disabled>
+                        Loading commodities...
                       </SelectItem>
-                    ))}
+                    ) : (
+                      commodities.map((c) => (
+                        <SelectItem key={c._id} value={c._id} className="py-3">
+                          <div className="flex flex-col">
+                            <span className="font-medium">{c.name}</span>
+                            <span className="text-sm text-muted-foreground">
+                              {formatCurrency(c.defaultRatePer100Kg)}/100kg • {c.defaultDeductionPerBag}kg deduction
+                            </span>
+                          </div>
+                        </SelectItem>
+                      ))
+                    )}
                   </SelectContent>
                 </Select>
+                {formData.commodityId && (
+                  <p className="text-xs text-muted-foreground">
+                    Selected: {commodities.find(c => c._id === formData.commodityId)?.name}
+                  </p>
+                )}
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
@@ -263,13 +266,28 @@ export function BillForm({ bill, bags }: BillFormProps) {
                     value={formData.deductionPerBag}
                     onValueChange={(v) => setFormData({ ...formData, deductionPerBag: v })}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="h-11">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="0">0 kg (No deduction)</SelectItem>
-                      <SelectItem value="1">1 kg</SelectItem>
-                      <SelectItem value="2">2 kg</SelectItem>
+                      <SelectItem value="0" className="py-2">
+                        <div className="flex flex-col">
+                          <span className="font-medium">0 kg</span>
+                          <span className="text-xs text-muted-foreground">No deduction</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="1" className="py-2">
+                        <div className="flex flex-col">
+                          <span className="font-medium">1 kg</span>
+                          <span className="text-xs text-muted-foreground">Standard deduction</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="2" className="py-2">
+                        <div className="flex flex-col">
+                          <span className="font-medium">2 kg</span>
+                          <span className="text-xs text-muted-foreground">Higher deduction</span>
+                        </div>
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                   <p className="text-xs text-muted-foreground">Applied when bag weight exceeds 100kg</p>
@@ -356,12 +374,16 @@ export function BillForm({ bill, bags }: BillFormProps) {
                         setDeductions({ ...deductions, commissionType: v as "flat" | "percentage" })
                       }
                     >
-                      <SelectTrigger className="w-24">
+                      <SelectTrigger className="w-28 h-11">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="flat">Flat</SelectItem>
-                        <SelectItem value="percentage">%</SelectItem>
+                        <SelectItem value="flat" className="py-2">
+                          <span className="font-medium">Flat</span>
+                        </SelectItem>
+                        <SelectItem value="percentage" className="py-2">
+                          <span className="font-medium">%</span>
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

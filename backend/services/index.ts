@@ -42,12 +42,9 @@ export class UserService {
   static async findById(id: string): Promise<User | null> {
     await connectDB()
     if (!id) {
-      throw new ValidationError("User ID is required")
+      return null
     }
     const user = await UserModel.findOne({ _id: id }).lean()
-    if (!user) {
-      throw new NotFoundError(`User with ID ${id} not found`)
-    }
     return user
   }
 
@@ -237,14 +234,10 @@ export class CommodityService {
     await connectDB()
 
     if (!id) {
-      throw new ValidationError("Commodity ID is required")
+      return null
     }
 
     const commodity = await CommodityModel.findOne({ _id: id }).lean()
-    if (!commodity) {
-      throw new NotFoundError(`Commodity with ID ${id} not found`)
-    }
-
     return commodity
   }
 
@@ -438,14 +431,10 @@ export class BillService {
     await connectDB()
 
     if (!id) {
-      throw new ValidationError("Bill ID is required")
+      return null
     }
 
     const bill = await BillModel.findOne({ _id: id }).lean()
-    if (!bill) {
-      throw new NotFoundError(`Bill with ID ${id} not found`)
-    }
-
     return bill
   }
 
@@ -653,14 +642,10 @@ export class BagService {
     await connectDB()
 
     if (!id) {
-      throw new ValidationError("Bag ID is required")
+      return null
     }
 
     const bag = await BagModel.findOne({ _id: id }).lean()
-    if (!bag) {
-      throw new NotFoundError(`Bag with ID ${id} not found`)
-    }
-
     return bag
   }
 

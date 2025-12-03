@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getAllBills } from "@/lib/db"
 
-export async function GET(request: NextRequest, { params }: { params: { name: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ name: string }> }) {
   try {
-    const farmerName = decodeURIComponent(params.name)
+    const { name } = await params
+    const farmerName = decodeURIComponent(name)
     const bills = await getAllBills()
     
     // Filter bills for this specific farmer

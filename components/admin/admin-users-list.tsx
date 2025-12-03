@@ -88,10 +88,59 @@ export function AdminUsersList() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // Client-side validation
+    if (!formData.name.trim()) {
+      toast.error("Name is required")
+      return
+    }
+    
+    if (!formData.email.trim()) {
+      toast.error("Email is required")
+      return
+    }
+    
+    if (!editingUser) {
+      if (!formData.password) {
+        toast.error("Password is required")
+        return
+      }
+      
+      if (formData.password.length < 12) {
+        toast.error("Password must be at least 12 characters")
+        return
+      }
+      
+      if (!/[A-Z]/.test(formData.password)) {
+        toast.error("Password must contain at least one uppercase letter")
+        return
+      }
+      
+      if (!/[a-z]/.test(formData.password)) {
+        toast.error("Password must contain at least one lowercase letter")
+        return
+      }
+      
+      if (!/[0-9]/.test(formData.password)) {
+        toast.error("Password must contain at least one number")
+        return
+      }
+      
+      if (!/[!@#$%^&*(),.?":{}|<>]/.test(formData.password)) {
+        toast.error("Password must contain at least one special character")
+        return
+      }
+    }
+
     setIsSaving(true)
 
     try {
-      const payload = editingUser ? { name: formData.name, email: formData.email, role: formData.role } : formData
+      const payload = editingUser ? { name: formData.name.trim(), email: formData.email.trim(), role: formData.role } : {
+        name: formData.name.trim(),
+        email: formData.email.trim(),
+        password: formData.password,
+        role: formData.role
+      }
 
       const url = editingUser ? `/api/users/${editingUser._id}` : "/api/users"
       const method = editingUser ? "PUT" : "POST"

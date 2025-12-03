@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getBillById } from "@/lib/db"
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const bill = await getBillById(params.id)
+    const { id } = await params
+    const bill = await getBillById(id)
     
     if (!bill) {
       return NextResponse.json(

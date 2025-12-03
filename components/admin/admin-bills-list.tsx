@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState, useCallback } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -46,6 +46,7 @@ import type { Bill, Commodity } from "@/lib/types"
 
 export function AdminBillsList() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [bills, setBills] = useState<Bill[]>([])
   const [commodities, setCommodities] = useState<Commodity[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -59,7 +60,7 @@ export function AdminBillsList() {
   const [filters, setFilters] = useState({
     search: "",
     commodityId: "",
-    status: "",
+    status: searchParams.get('status') || "",
     startDate: "",
     endDate: "",
   })
@@ -169,7 +170,7 @@ export function AdminBillsList() {
     const rows = bills.map((bill) => [
       bill.invoiceId,
       formatDate(bill.createdAt),
-      bill.farmers?.map(f => f.name).join(", ") || bill.sellerName || "-",
+      bill.farmers?.map(f => f.name.split(' ')[0]).join(", ") || bill.sellerName || "-",
       bill.buyerName,
       bill.commodityName,
       bill.totalAdjustedWeight || bill.adjustedTotalWeight,
@@ -249,14 +250,19 @@ export function AdminBillsList() {
                     setPagination({ ...pagination, page: 1 })
                   }}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="h-10">
                     <SelectValue placeholder="All commodities" />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All commodities</SelectItem>
+                  <SelectContent className="max-h-48">
+                    <SelectItem value="all" className="font-medium">All commodities</SelectItem>
                     {commodities.map((c) => (
-                      <SelectItem key={c._id} value={c._id}>
-                        {c.name}
+                      <SelectItem key={c._id} value={c._id} className="py-2">
+                        <div className="flex flex-col">
+                          <span className="font-medium">{c.name}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {formatCurrency(c.defaultRatePer100Kg)}/100kg
+                          </span>
+                        </div>
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -358,7 +364,7 @@ export function AdminBillsList() {
                             <div className="space-y-1">
                               {bill.farmers.slice(0, 2).map((farmer, idx) => (
                                 <div key={idx} className="text-sm">
-                                  {farmer.name}
+                                  {farmer.name.split(' ')[0]}
                                 </div>
                               ))}
                               {bill.farmers.length > 2 && (

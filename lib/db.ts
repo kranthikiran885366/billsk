@@ -211,27 +211,45 @@ export async function getDashboardStats(): Promise<{
   recentBills: Bill[]
   billsByStatus: { status: string; count: number }[]
 }> {
-  const bills = await BillService.getAll()
-  const commodities = await CommodityService.getAll()
+  try {
+    const billsResult = await BillService.getAll()
+    const commodities = await CommodityService.getAll()
 
-  const totalBills = bills.length
-  const totalRevenue = bills.filter((b) => b.status === "paid").reduce((sum, b) => sum + b.finalPayable, 0)
-  const pendingAmount = bills.filter((b) => b.status !== "paid").reduce((sum, b) => sum + b.finalPayable, 0)
+    const bills = billsResult.bills || []
+    const totalBills = bills.length
+    const totalRevenue = bills.filter((b) => b.status === "paid").reduce((sum, b) => sum + (b.finalPayable || 0), 0)
+    const pendingAmount = bills.filter((b) => b.status !== "paid").reduce((sum, b) => sum + (b.finalPayable || 0), 0)
 
-  const billsByStatus = [
-    { status: "draft", count: bills.filter((b) => b.status === "draft").length },
-    { status: "finalized", count: bills.filter((b) => b.status === "finalized").length },
-    { status: "paid", count: bills.filter((b) => b.status === "paid").length },
-  ]
+    const billsByStatus = [
+      { status: "draft", count: bills.filter((b) => b.status === "draft").length },
+      { status: "finalized", count: bills.filter((b) => b.status === "finalized").length },
+      { status: "paid", count: bills.filter((b) => b.status === "paid").length },
+    ]
 
-  const recentBills = bills.slice(0, 5)
+    const recentBills = bills.slice(0, 5)
 
-  return {
-    totalBills,
-    totalRevenue,
-    pendingAmount,
-    totalCommodities: commodities.length,
-    recentBills,
-    billsByStatus,
+    return {
+      totalBills,
+      totalRevenue,
+      pendingAmount,
+      totalCommodities: commodities.length,
+      recentBills,
+      billsByStatus,
+    }
+  } catch (error) {
+    console.error("Dashboard stats error:", error)
+    // Return default values if there's an error
+    return {
+      totalBills: 0,
+      totalRevenue: 0,
+      pendingAmount: 0,
+      totalCommodities: 0,
+      recentBills: [],
+      billsByStatus: [
+        { status: "draft", count: 0 },
+        { status: "finalized", count: 0 },
+        { status: "paid", count: 0 },
+      ],
+    }
   }
 }

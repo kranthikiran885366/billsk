@@ -132,7 +132,7 @@ export async function POST(request: NextRequest) {
 
     // Create bill
     const bill = await createBill({
-      invoiceId: generateInvoiceId(),
+      invoiceId: generateInvoiceId(data.sellerName),
       sellerName: data.sellerName,
       buyerName: data.buyerName,
       commodityId: data.commodityId,

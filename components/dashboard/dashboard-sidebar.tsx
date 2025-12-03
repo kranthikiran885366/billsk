@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { LayoutDashboard, FileText, Package, Settings, Users, History, Shield, BarChart3 } from "lucide-react"
+import { LayoutDashboard, FileText, Package, Settings, Users, History, Shield, BarChart3, UserPlus } from "lucide-react"
 import type { UserRole } from "@/lib/types"
 
 interface DashboardSidebarProps {
@@ -39,6 +39,11 @@ const adminNavItems = [
     title: "Bills",
     href: "/admin/bills",
     icon: FileText,
+  },
+  {
+    title: "Multi-Farmer Bills",
+    href: "/admin/bills/multi-farmer",
+    icon: UserPlus,
   },
   {
     title: "Commodities",
