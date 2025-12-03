@@ -1,0 +1,34 @@
+# Define code owners for this repository
+# These users/teams will be automatically requested for review when someone opens a pull request
+
+# Global owners - required for all changes
+* @your-github-username
+
+# Backend critical files - require approval
+/backend/** @your-github-username
+/lib/** @your-github-username
+/app/api/** @your-github-username
+
+# Configuration files - require approval
+*.config.js @your-github-username
+*.config.ts @your-github-username
+*.config.mjs @your-github-username
+tsconfig.json @your-github-username
+package.json @your-github-username
+
+# Security sensitive files - require approval
+.env.example @your-github-username
+middleware.ts @your-github-username
+/lib/auth.ts @your-github-username
+/lib/security.ts @your-github-username
+/lib/validation.ts @your-github-username
+/backend/config/** @your-github-username
+
+# Database models - require approval
+/backend/models/** @your-github-username
+
+# Documentation can be edited by contributors
+*.md
+
+# GitHub workflows - require approval
+/.github/** @your-github-username

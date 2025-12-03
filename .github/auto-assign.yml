@@ -1,0 +1,29 @@
+# Configuration for auto-assign action
+# Automatically assigns reviewers to pull requests
+
+# Reviewers to assign
+reviewers:
+  - your-github-username
+
+# Number of reviewers to assign
+numberOfReviewers: 1
+
+# Skip adding reviewers if PR is in draft
+skipDraftPR: true
+
+# Skip keywords in PR title to avoid auto-assignment
+skipKeywords:
+  - wip
+  - WIP
+  - "[WIP]"
+  - "[draft]"
+
+# Add assignees (person who should work on the PR)
+addAssignees: true
+
+# Assignees (same as reviewers for self-review)
+assignees:
+  - your-github-username
+
+# Number of assignees
+numberOfAssignees: 1

@@ -1,0 +1,24 @@
+name: Prevent Direct Pushes
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+
+jobs:
+  check-if-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check if push is from PR
+        run: |
+          if [ "${{ github.event_name }}" == "push" ] && [ -z "${{ github.event.pull_request }}" ]; then
+            echo "❌ Direct push to protected branch detected!"
+            echo "All changes to main/develop must go through Pull Requests."
+            echo "Please:"
+            echo "1. Revert this push"
+            echo "2. Create a feature branch"
+            echo "3. Open a Pull Request"
+            exit 1
+          fi
+          echo "✓ Push is from merged PR - allowed"

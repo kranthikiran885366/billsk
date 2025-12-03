@@ -1,0 +1,15 @@
+name: Auto-assign Pull Request
+description: Automatically assign pull requests to code owners
+
+on:
+  pull_request:
+    types: [opened, reopened]
+
+jobs:
+  assign-reviewers:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Auto-assign reviewers
+        uses: kentaro-m/auto-assign-action@v1.2.5
+        with:
+          configuration-path: ".github/auto-assign.yml"
