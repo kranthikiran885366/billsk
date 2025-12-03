@@ -79,10 +79,14 @@ export async function POST(request: NextRequest) {
     const email = sanitizeEmail(parsed.data.email)
     const { password } = parsed.data
 
+    // Debug logging
+    console.log('Login attempt:', { email, passwordLength: password?.length })
+
     // Find user
     const user = await findUserByEmail(email)
 
     if (!user) {
+      console.log('User not found:', email)
       recordFailedAttempt(identifier)
       // Enhanced security logging
       await logSecurityEvent("LOGIN_FAILED", "unknown", "Unknown", {
@@ -137,7 +141,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify password
+    console.log('Verifying password for user:', user.email)
     const isValidPassword = await verifyPassword(password, user.passwordHash)
+    console.log('Password valid:', isValidPassword)
 
     if (!isValidPassword) {
       recordFailedAttempt(identifier)
