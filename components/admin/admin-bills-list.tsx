@@ -42,11 +42,13 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { formatCurrency, formatDate, formatWeight } from "@/lib/format"
+import { useResponsive } from "@/lib/hooks/use-responsive"
 import type { Bill, Commodity } from "@/lib/types"
 
 export function AdminBillsList() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { isMobile, isTablet } = useResponsive()
   const [bills, setBills] = useState<Bill[]>([])
   const [commodities, setCommodities] = useState<Commodity[]>([])
   const [isLoading, setIsLoading] = useState(true)

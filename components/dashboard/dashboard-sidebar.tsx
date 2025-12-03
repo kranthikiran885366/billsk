@@ -8,6 +8,8 @@ import type { UserRole } from "@/lib/types"
 
 interface DashboardSidebarProps {
   userRole: UserRole
+  isOpen?: boolean
+  onClose?: () => void
   isMobile?: boolean
 }
 
@@ -72,15 +74,20 @@ const adminNavItems = [
   },
 ]
 
-export function DashboardSidebar({ userRole, isMobile }: DashboardSidebarProps) {
+export function DashboardSidebar({ userRole, isOpen, onClose, isMobile }: DashboardSidebarProps) {
   const pathname = usePathname()
   const navItems = userRole === "admin" ? adminNavItems : viewerNavItems
 
   return (
     <aside
       className={cn(
-        "flex flex-col h-full bg-sidebar text-sidebar-foreground",
-        !isMobile && "fixed left-0 top-0 z-30 hidden lg:flex w-64 border-r border-sidebar-border",
+        "flex flex-col h-full bg-sidebar text-sidebar-foreground transition-transform duration-300",
+        isMobile 
+          ? cn(
+              "fixed left-0 top-0 z-50 w-64 border-r border-sidebar-border",
+              isOpen ? "translate-x-0" : "-translate-x-full"
+            )
+          : "fixed left-0 top-0 z-30 hidden lg:flex w-64 border-r border-sidebar-border",
       )}
     >
       {/* Logo */}
@@ -102,6 +109,7 @@ export function DashboardSidebar({ userRole, isMobile }: DashboardSidebarProps) 
             <Link
               key={item.href}
               href={item.href}
+              onClick={isMobile ? onClose : undefined}
               className={cn(
                 "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
                 isActive
