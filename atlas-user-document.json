@@ -1,11 +1,14 @@
 {
-  "email": "admin@example.com",
+  "_id": "user_admin_001",
   "name": "Admin User",
+  "email": "admin@example.com",
+  "passwordHash": "$2b$12$HPm0/D.V2/InFFLpaMNiB.iOcP8b4F/b3qePPyA9anzoBxu0x6p06",
   "role": "admin",
-  "passwordHash": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj6hsxq/3Haa",
   "status": "active",
-  "failedLoginAttempts": 0,
-  "isLocked": false,
-  "createdAt": { "$date": "2024-01-01T00:00:00.000Z" },
-  "updatedAt": { "$date": "2024-01-01T00:00:00.000Z" }
+  "mfaEnabled": false,
+  "failedLoginAttempts": 1,
+  "trustedDevices": [],
+  "loginHistory": [],
+  "createdAt": { "$date": "2025-12-03T00:00:00.000Z" },
+  "updatedAt": { "$date": "2025-12-03T06:20:14.081Z" }
 }

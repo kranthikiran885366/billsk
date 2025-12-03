@@ -38,6 +38,7 @@ import {
   Filter,
   MoreHorizontal,
   CheckCircle,
+  Users,
 } from "lucide-react"
 import Link from "next/link"
 import { formatCurrency, formatDate, formatWeight } from "@/lib/format"
@@ -157,7 +158,7 @@ export function AdminBillsList() {
     const headers = [
       "Invoice ID",
       "Date",
-      "Seller",
+      "Farmers",
       "Buyer",
       "Commodity",
       "Total Weight",
@@ -168,10 +169,10 @@ export function AdminBillsList() {
     const rows = bills.map((bill) => [
       bill.invoiceId,
       formatDate(bill.createdAt),
-      bill.sellerName,
+      bill.farmers?.map(f => f.name).join(", ") || bill.sellerName || "-",
       bill.buyerName,
       bill.commodityName,
-      bill.adjustedTotalWeight,
+      bill.totalAdjustedWeight || bill.adjustedTotalWeight,
       bill.totalAmount,
       bill.finalPayable,
       bill.status,
@@ -200,10 +201,16 @@ export function AdminBillsList() {
             <Download className="mr-2 h-4 w-4" />
             Export
           </Button>
+          <Button variant="outline" asChild>
+            <Link href="/admin/bills/multi-farmer">
+              <Users className="mr-2 h-4 w-4" />
+              Multi-Farmer Bill
+            </Link>
+          </Button>
           <Button asChild>
             <Link href="/admin/bills/new">
               <Plus className="mr-2 h-4 w-4" />
-              New Bill
+              Single Farmer Bill
             </Link>
           </Button>
         </div>
@@ -216,7 +223,7 @@ export function AdminBillsList() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search by invoice, seller, or buyer..."
+                placeholder="Search by invoice, farmer, or buyer..."
                 value={filters.search}
                 onChange={(e) => {
                   setFilters({ ...filters, search: e.target.value })
@@ -321,7 +328,7 @@ export function AdminBillsList() {
                 <tr className="border-b border-border">
                   <th className="text-left py-3 px-4 font-medium text-muted-foreground">Invoice</th>
                   <th className="text-left py-3 px-4 font-medium text-muted-foreground">Date</th>
-                  <th className="text-left py-3 px-4 font-medium text-muted-foreground">Seller</th>
+                  <th className="text-left py-3 px-4 font-medium text-muted-foreground">Farmers</th>
                   <th className="text-left py-3 px-4 font-medium text-muted-foreground">Commodity</th>
                   <th className="text-right py-3 px-4 font-medium text-muted-foreground">Weight</th>
                   <th className="text-right py-3 px-4 font-medium text-muted-foreground">Final Payable</th>
@@ -345,9 +352,28 @@ export function AdminBillsList() {
                     <tr key={bill._id} className="border-b border-border last:border-0 hover:bg-muted/50">
                       <td className="py-3 px-4 font-medium">{bill.invoiceId}</td>
                       <td className="py-3 px-4 text-muted-foreground">{formatDate(bill.createdAt)}</td>
-                      <td className="py-3 px-4">{bill.sellerName}</td>
+                      <td className="py-3 px-4">
+                        <div className="max-w-[200px]">
+                          {bill.farmers && bill.farmers.length > 0 ? (
+                            <div className="space-y-1">
+                              {bill.farmers.slice(0, 2).map((farmer, idx) => (
+                                <div key={idx} className="text-sm">
+                                  {farmer.name}
+                                </div>
+                              ))}
+                              {bill.farmers.length > 2 && (
+                                <div className="text-xs text-muted-foreground">
+                                  +{bill.farmers.length - 2} more
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground">{bill.sellerName || "-"}</span>
+                          )}
+                        </div>
+                      </td>
                       <td className="py-3 px-4">{bill.commodityName}</td>
-                      <td className="py-3 px-4 text-right font-mono">{formatWeight(bill.adjustedTotalWeight)}</td>
+                      <td className="py-3 px-4 text-right font-mono">{formatWeight(bill.totalAdjustedWeight || bill.adjustedTotalWeight)}</td>
                       <td className="py-3 px-4 text-right font-medium">{formatCurrency(bill.finalPayable)}</td>
                       <td className="py-3 px-4">
                         <span
