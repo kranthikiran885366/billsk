@@ -194,26 +194,26 @@ export function AdminBillsList() {
   return (
     <div className="space-y-6">
       {/* Page header */}
-      <div className="flex items-center justify-between">
+      <div className={`flex ${isMobile ? 'flex-col gap-4' : 'items-center justify-between'}`}>
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Bills</h1>
+          <h1 className={`${isMobile ? 'text-xl' : 'text-2xl'} font-semibold tracking-tight`}>Bills</h1>
           <p className="text-muted-foreground">Manage commodity bills and invoices</p>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={handleExportCSV}>
+        <div className={`flex ${isMobile ? 'flex-col' : 'items-center'} gap-2`}>
+          <Button variant="outline" onClick={handleExportCSV} size={isMobile ? "sm" : "default"}>
             <Download className="mr-2 h-4 w-4" />
-            Export
+            {isMobile ? "Export" : "Export"}
           </Button>
-          <Button variant="outline" asChild>
+          <Button variant="outline" asChild size={isMobile ? "sm" : "default"}>
             <Link href="/admin/bills/multi-farmer">
               <Users className="mr-2 h-4 w-4" />
-              Multi-Farmer Bill
+              {isMobile ? "Multi-Farmer" : "Multi-Farmer Bill"}
             </Link>
           </Button>
-          <Button asChild>
+          <Button asChild size={isMobile ? "sm" : "default"}>
             <Link href="/admin/bills/new">
               <Plus className="mr-2 h-4 w-4" />
-              Single Farmer Bill
+              {isMobile ? "New Bill" : "Single Farmer Bill"}
             </Link>
           </Button>
         </div>
@@ -331,17 +331,16 @@ export function AdminBillsList() {
         </CardHeader>
         <CardContent>
           <div className="relative overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className={`w-full ${isMobile ? 'text-xs' : 'text-sm'}`}>
               <thead>
                 <tr className="border-b border-border">
-                  <th className="text-left py-3 px-4 font-medium text-muted-foreground">Invoice</th>
-                  <th className="text-left py-3 px-4 font-medium text-muted-foreground">Date</th>
-                  <th className="text-left py-3 px-4 font-medium text-muted-foreground">Farmers</th>
-                  <th className="text-left py-3 px-4 font-medium text-muted-foreground">Commodity</th>
-                  <th className="text-right py-3 px-4 font-medium text-muted-foreground">Weight</th>
-                  <th className="text-right py-3 px-4 font-medium text-muted-foreground">Final Payable</th>
-                  <th className="text-left py-3 px-4 font-medium text-muted-foreground">Status</th>
-                  <th className="text-center py-3 px-4 font-medium text-muted-foreground">Actions</th>
+                  <th className={`text-left ${isMobile ? 'py-2 px-2' : 'py-3 px-4'} font-medium text-muted-foreground`}>Invoice</th>
+                  {!isMobile && <th className="text-left py-3 px-4 font-medium text-muted-foreground">Date</th>}
+                  <th className={`text-left ${isMobile ? 'py-2 px-2' : 'py-3 px-4'} font-medium text-muted-foreground`}>Farmers</th>
+                  {!isMobile && <th className="text-left py-3 px-4 font-medium text-muted-foreground">Commodity</th>}
+                  <th className={`text-right ${isMobile ? 'py-2 px-2' : 'py-3 px-4'} font-medium text-muted-foreground`}>Amount</th>
+                  <th className={`text-left ${isMobile ? 'py-2 px-2' : 'py-3 px-4'} font-medium text-muted-foreground`}>Status</th>
+                  <th className={`text-center ${isMobile ? 'py-2 px-2' : 'py-3 px-4'} font-medium text-muted-foreground`}>Actions</th>
                 </tr>
               </thead>
               <tbody>
