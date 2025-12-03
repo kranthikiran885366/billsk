@@ -67,7 +67,7 @@ export function LoginForm() {
             rp: { name: 'SecureBill' },
             user: {
               id: new TextEncoder().encode('admin'),
-              name: 'admin@commoditybilling.com',
+              name: 'admin@example.com',
               displayName: 'Admin User'
             },
             pubKeyCredParams: [{ alg: -7, type: 'public-key' }],
@@ -77,7 +77,7 @@ export function LoginForm() {
         })
         
         if (credential) {
-          setFormData({ email: 'admin@commoditybilling.com', password: 'Admin@123456' })
+          setFormData({ email: 'admin@example.com', password: 'Admin@123456' })
           await handleLogin(true)
         }
       } catch {
@@ -173,7 +173,7 @@ export function LoginForm() {
                 <Input
                   id="email"
                   type="email"
-                  placeholder="admin@commoditybilling.com"
+                  placeholder="admin@example.com"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   className="pl-10"
