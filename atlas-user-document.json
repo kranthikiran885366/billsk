@@ -1,0 +1,11 @@
+{
+  "email": "admin@example.com",
+  "name": "Admin User",
+  "role": "admin",
+  "passwordHash": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj6hsxq/3Haa",
+  "status": "active",
+  "failedLoginAttempts": 0,
+  "isLocked": false,
+  "createdAt": { "$date": "2024-01-01T00:00:00.000Z" },
+  "updatedAt": { "$date": "2024-01-01T00:00:00.000Z" }
+}

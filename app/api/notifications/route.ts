@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { verifyToken } from '@/lib/auth'
+import { verifyAccessToken } from '@/lib/auth'
 import connectDB from '@/backend/config/database'
-import { AuditLog } from '@/backend/models'
+import { AuditLogModel } from '@/backend/models'
 
 export async function GET(request: NextRequest) {
   try {
@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
 
     await connectDB()
 
-    const notifications = await AuditLog.find({
+    const notifications = await AuditLogModel.find({
       $or: [
         { action: { $in: ['LOGIN_FAILED', 'ACCOUNT_LOCKED'] } },
         { userId: payload.userId }

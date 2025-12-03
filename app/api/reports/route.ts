@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { verifyToken } from '@/lib/auth'
+import { verifyAccessToken } from '@/lib/auth'
 import connectDB from '@/backend/config/database'
-import { Bill, Commodity } from '@/backend/models'
+import { BillModel, CommodityModel } from '@/backend/models'
 
 export async function GET(request: NextRequest) {
   try {
@@ -25,9 +25,9 @@ export async function GET(request: NextRequest) {
     let report = {}
 
     if (type === 'summary') {
-      const totalBills = await Bill.countDocuments()
-      const totalCommodities = await Commodity.countDocuments()
-      const totalRevenue = await Bill.aggregate([
+      const totalBills = await BillModel.countDocuments()
+      const totalCommodities = await CommodityModel.countDocuments()
+      const totalRevenue = await BillModel.aggregate([
         { $group: { _id: null, total: { $sum: '$totalAmount' } } }
       ])
 

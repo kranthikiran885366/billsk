@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { verifyToken } from '@/lib/auth'
+import { verifyAccessToken } from '@/lib/auth'
 import connectDB from '@/backend/config/database'
-import { Bill, Commodity, User } from '@/backend/models'
+import { BillModel, CommodityModel, UserModel } from '@/backend/models'
 
 export async function GET(request: NextRequest) {
   try {
@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
     const results: any = {}
 
     if (type === 'all' || type === 'bills') {
-      results.bills = await Bill.find({
+      results.bills = await BillModel.find({
         $or: [
           { billNumber: { $regex: query, $options: 'i' } },
           { customerName: { $regex: query, $options: 'i' } }
@@ -37,13 +37,13 @@ export async function GET(request: NextRequest) {
     }
 
     if (type === 'all' || type === 'commodities') {
-      results.commodities = await Commodity.find({
+      results.commodities = await CommodityModel.find({
         name: { $regex: query, $options: 'i' }
       }).limit(10)
     }
 
     if ((type === 'all' || type === 'users') && payload.role === 'admin') {
-      results.users = await User.find({
+      results.users = await UserModel.find({
         $or: [
           { name: { $regex: query, $options: 'i' } },
           { email: { $regex: query, $options: 'i' } }

@@ -69,6 +69,12 @@ export function generateAdvancedFingerprint(request: NextRequest): string {
     .digest('hex')
 }
 
+export function generateSecureId(prefix: string = ''): string {
+  const timestamp = Date.now()
+  const randomPart = crypto.randomBytes(8).toString('base64url').substring(0, 11)
+  return `${prefix}${timestamp}_${randomPart}`
+}
+
 export async function logSecurityEvent(
   action: string,
   userId: string,

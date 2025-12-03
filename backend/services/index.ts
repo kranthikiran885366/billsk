@@ -32,7 +32,11 @@ export class UserService {
     if (!email || typeof email !== "string") {
       throw new ValidationError("Invalid email provided")
     }
-    return await UserModel.findOne({ email: email.toLowerCase().trim() }).lean()
+    const searchEmail = email.toLowerCase().trim()
+    console.log('UserService.findByEmail searching for:', searchEmail)
+    const user = await UserModel.findOne({ email: searchEmail }).lean()
+    console.log('UserService.findByEmail result:', user ? 'FOUND' : 'NOT FOUND')
+    return user
   }
 
   static async findById(id: string): Promise<User | null> {

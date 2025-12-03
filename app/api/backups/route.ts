@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { BackupService } from "@/backend/services/backup"
-import { verifyAuth } from "@/lib/auth"
+import { verifyAccessToken } from "@/lib/auth"
 import connectDB from "@/backend/config/database"
 
 export async function GET(request: NextRequest) {

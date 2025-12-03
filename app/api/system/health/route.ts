@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { verifyToken } from '@/lib/auth'
+import { verifyAccessToken } from '@/lib/auth'
 import connectDB from '@/backend/config/database'
 import mongoose from 'mongoose'
 

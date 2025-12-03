@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { verifyToken } from '@/lib/auth'
+import { verifyAccessToken } from '@/lib/auth'
 import connectDB from '@/backend/config/database'
-import { AuditLog } from '@/backend/models'
+import { AuditLogModel } from '@/backend/models'
 
 export async function GET(request: NextRequest) {
   try {
@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
 
     await connectDB()
 
-    const deletedItems = await AuditLog.find({
+    const deletedItems = await AuditLogModel.find({
       action: { $in: ['DELETE_BILL', 'DELETE_COMMODITY', 'DELETE_USER'] }
     }).sort({ timestamp: -1 }).limit(100)
 

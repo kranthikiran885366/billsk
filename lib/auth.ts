@@ -1,5 +1,6 @@
 import { SignJWT, jwtVerify } from "jose"
 import bcrypt from "bcryptjs"
+import crypto from "crypto"
 import type { JWTPayload, RefreshTokenPayload, User, UserRole } from "./types"
 
 // Environment variables - MUST be set in production
@@ -116,4 +117,24 @@ export function hasRole(userRole: UserRole, requiredRoles: UserRole[]): boolean 
 // Generate secure random token ID
 export function generateTokenId(): string {
   return crypto.randomUUID()
+}
+
+// Helper function to verify token from request
+export async function verifyToken(token: string): Promise<JWTPayload | null> {
+  return verifyAccessToken(token)
+}
+
+// Helper function to verify auth from request
+export async function verifyAuth(request: any): Promise<{ success: boolean; user?: JWTPayload }> {
+  const token = request.headers.get('authorization')?.replace('Bearer ', '')
+  if (!token) {
+    return { success: false }
+  }
+  
+  const payload = await verifyAccessToken(token)
+  if (!payload) {
+    return { success: false }
+  }
+  
+  return { success: true, user: payload }
 }
